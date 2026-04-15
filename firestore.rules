@@ -1,0 +1,105 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'currency', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.email is string && isValidEmail(data.email) && data.email.size() < 150 &&
+             data.currency is string && data.currency.size() == 3 &&
+             data.createdAt is string && data.createdAt.size() < 50;
+    }
+
+    function isValidExpense(data) {
+      return hasRequiredFields(['uid', 'amount', 'category', 'date', 'vendor', 'source', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.amount is number && data.amount >= 0 &&
+             data.category is string && data.category.size() > 0 && data.category.size() < 50 &&
+             data.date is string && data.date.size() < 20 &&
+             data.vendor is string && data.vendor.size() > 0 && data.vendor.size() < 100 &&
+             data.source in ['manual', 'scan'] &&
+             (!('note' in data) || (data.note is string && data.note.size() < 500)) &&
+             data.createdAt is string && data.createdAt.size() < 50;
+    }
+
+    function isValidBudget(data) {
+      return hasRequiredFields(['uid', 'month', 'limits', 'updatedAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.month is string && data.month.size() < 20 &&
+             data.limits is map &&
+             data.updatedAt is string && data.updatedAt.size() < 50;
+    }
+
+    function isValidInsight(data) {
+      return hasRequiredFields(['uid', 'month', 'tips', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.month is string && data.month.size() < 20 &&
+             data.tips is list && data.tips.size() <= 20 &&
+             data.createdAt is string && data.createdAt.size() < 50;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && uidUnchanged();
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      
+      match /expenses/{expenseId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidExpense(request.resource.data) && uidUnchanged();
+        allow update: if isOwner(userId) && isValidExpense(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId);
+      }
+
+      match /budgets/{budgetId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidBudget(request.resource.data) && uidUnchanged();
+        allow update: if isOwner(userId) && isValidBudget(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId);
+      }
+
+      match /insights/{insightId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidInsight(request.resource.data) && uidUnchanged();
+        allow update: if isOwner(userId) && isValidInsight(request.resource.data) && uidNotModified();
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

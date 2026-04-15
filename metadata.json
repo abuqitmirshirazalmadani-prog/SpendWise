@@ -1,0 +1,6 @@
+{
+  "name": "SpendWise",
+  "description": "An AI-powered personal finance app that lets users track daily expenses, scan bills via photo using OCR, and receive personalized AI-generated advice on how to reduce spending.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}

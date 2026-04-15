@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "currency": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "currency", "createdAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "A single expense transaction",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "vendor": { "type": "string" },
+        "note": { "type": "string" },
+        "source": { "type": "string", "enum": ["manual", "scan"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "amount", "category", "date", "vendor", "source", "createdAt"]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Monthly budget limits by category",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "month": { "type": "string" },
+        "limits": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "month", "limits", "updatedAt"]
+    },
+    "Insight": {
+      "title": "Insight",
+      "description": "AI generated insights for a specific month",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "month": { "type": "string" },
+        "tips": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "month", "tips", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "User expenses"
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": { "$ref": "#/entities/Budget" },
+      "description": "User budgets"
+    },
+    "/users/{userId}/insights/{insightId}": {
+      "schema": { "$ref": "#/entities/Insight" },
+      "description": "User insights"
+    }
+  }
+}
