@@ -1,7 +1,7 @@
 import { Injectable, signal, Component, inject, computed, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy, ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, collection, doc, setDoc, getDoc, query, where, orderBy, onSnapshot, deleteDoc, addDoc, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, getDoc, query, where, orderBy, onSnapshot, deleteDoc, addDoc, QuerySnapshot, DocumentData, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { GoogleGenAI } from '@google/genai';
 import { Router, RouterLink, RouterOutlet, RouterLinkActive, provideRouter, Routes, CanActivateFn } from '@angular/router';
@@ -15,6 +15,17 @@ import { bootstrapApplication } from '@angular/platform-browser';
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration. You might need to set up Firebase again to fix connection issues.");
+    }
+  }
+}
+testConnection();
 
 export interface Expense {
   id?: string;

@@ -52,6 +52,7 @@ service cloud.firestore {
              data.vendor is string && data.vendor.size() > 0 && data.vendor.size() < 100 &&
              data.source in ['manual', 'scan'] &&
              (!('note' in data) || (data.note is string && data.note.size() < 500)) &&
+             (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() < 50)) &&
              data.createdAt is string && data.createdAt.size() < 50;
     }
 
