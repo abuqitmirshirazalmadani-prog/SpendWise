@@ -24,6 +24,7 @@ export interface Expense {
   date: string;
   vendor: string;
   note?: string;
+  paymentMethod?: string;
   source: 'manual' | 'scan';
   createdAt: string;
 }
@@ -534,6 +535,17 @@ export class DashboardComponent {
             </div>
 
             <div>
+              <span class="block text-sm text-slate-400 mb-1">Payment Method</span>
+              <select [(ngModel)]="paymentMethod" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-50 outline-none focus:border-emerald-500 transition-colors">
+                <option value="Cash">Cash</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
               <span class="block text-sm text-slate-400 mb-1">Note (Optional)</span>
               <input type="text" [(ngModel)]="note" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-50 outline-none focus:border-emerald-500 transition-colors" placeholder="Add a note">
             </div>
@@ -565,6 +577,7 @@ export class AddExpenseComponent {
   category = signal<string>('Other');
   vendor = signal<string>('');
   date = signal<string>(new Date().toISOString().split('T')[0]);
+  paymentMethod = signal<string>('Credit Card');
   note = signal<string>('');
   source = signal<'manual' | 'scan'>('manual');
   
@@ -616,6 +629,7 @@ export class AddExpenseComponent {
         category: this.category(),
         vendor: this.vendor(),
         date: parsedDate,
+        paymentMethod: this.paymentMethod(),
         note: this.note(),
         source: this.source()
       });
@@ -805,29 +819,55 @@ export class ScannerComponent implements AfterViewInit, OnDestroy {
       <header class="p-6 pb-4 bg-slate-950 sticky top-0 z-10 border-b border-slate-900">
         <h1 class="text-2xl font-semibold text-slate-50 mb-4">Transactions</h1>
         
-        <div class="flex gap-2">
-          <div class="relative flex-1">
-            <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 text-sm">search</mat-icon>
+        <div class="flex flex-col gap-3">
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <mat-icon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 text-sm">search</mat-icon>
+              <input 
+                type="text" 
+                [(ngModel)]="searchQuery"
+                placeholder="Search vendor or note..." 
+                class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors"
+              >
+            </div>
+            <select 
+              [(ngModel)]="selectedCategory"
+              class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors">
+              <option value="">All Categories</option>
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="Rent">Rent</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Health">Health</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Other">Other</option>
+            </select>
+            <select 
+              [(ngModel)]="selectedPaymentMethod"
+              class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors">
+              <option value="">All Methods</option>
+              <option value="Cash">Cash</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="flex gap-2">
             <input 
-              type="text" 
-              [(ngModel)]="searchQuery"
-              placeholder="Search vendor or note..." 
-              class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors"
+              type="date" 
+              [(ngModel)]="startDate"
+              class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
+              placeholder="Start Date"
+            >
+            <input 
+              type="date" 
+              [(ngModel)]="endDate"
+              class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors [color-scheme:dark]"
+              placeholder="End Date"
             >
           </div>
-          <select 
-            [(ngModel)]="selectedCategory"
-            class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-50 outline-none focus:border-emerald-500 transition-colors">
-            <option value="">All</option>
-            <option value="Food">Food</option>
-            <option value="Transport">Transport</option>
-            <option value="Rent">Rent</option>
-            <option value="Utilities">Utilities</option>
-            <option value="Health">Health</option>
-            <option value="Shopping">Shopping</option>
-            <option value="Entertainment">Entertainment</option>
-            <option value="Other">Other</option>
-          </select>
         </div>
       </header>
 
@@ -844,6 +884,10 @@ export class ScannerComponent implements AfterViewInit, OnDestroy {
                   <span>{{ expense.date | date:'MMM d, yyyy' }}</span>
                   <span>&bull;</span>
                   <span>{{ expense.category }}</span>
+                  @if (expense.paymentMethod) {
+                    <span>&bull;</span>
+                    <span>{{ expense.paymentMethod }}</span>
+                  }
                   @if (expense.source === 'scan') {
                     <mat-icon class="text-[10px] w-3 h-3 text-emerald-500">document_scanner</mat-icon>
                   }
@@ -872,11 +916,17 @@ export class ExpenseListComponent {
   
   searchQuery = signal('');
   selectedCategory = signal('');
+  selectedPaymentMethod = signal('');
+  startDate = signal('');
+  endDate = signal('');
 
   filteredExpenses = computed(() => {
     let exps = this.firebase.expenses();
     const q = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
+    const method = this.selectedPaymentMethod();
+    const start = this.startDate();
+    const end = this.endDate();
 
     if (q) {
       exps = exps.filter(e => 
@@ -886,6 +936,15 @@ export class ExpenseListComponent {
     }
     if (cat) {
       exps = exps.filter(e => e.category === cat);
+    }
+    if (method) {
+      exps = exps.filter(e => e.paymentMethod === method);
+    }
+    if (start) {
+      exps = exps.filter(e => e.date >= start);
+    }
+    if (end) {
+      exps = exps.filter(e => e.date <= end);
     }
     return exps;
   });
